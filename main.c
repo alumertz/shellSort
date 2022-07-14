@@ -2,8 +2,13 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <math.h>
+#include <time.h>
 
 const char* filename = "entradaT.txt";
+const char* out1 = "saida1.txt";
+const char* out2 = "saida2.txt";
+
 
 int CIURA[17] = {1,4,10,23,57,132,301,701,1577,3548,7983,17961,40412,90927,204585,460316,1035711};
 
@@ -41,7 +46,7 @@ int calcH(int type, int h){
     }
 }
 
-void selectSort(int *vet,int tam, int type){
+void selectSort(int *vet,int tam, int type, FILE *out_file1 ){
     int h;
 
     if (type==0){
@@ -63,13 +68,19 @@ void selectSort(int *vet,int tam, int type){
         ordena(vet,tam, h);
 
         for(int j=0; j<tam;j++){
-            printf("%d ", vet[j]);
+            fprintf(out_file1,"%d ", vet[j]);
         }
-        printf ("INCR=%d\n", h);
+        fprintf(out_file1,"INCR=%d\n", h);
         h= calcH(type, h);
     }
 
-    printf ("\n");
+    fprintf(out_file1,"\n");
+}
+
+void copyVet(int *vet, int *vetcpy, int size){
+    for(int x =0 ; x < size ; x++){
+        vetcpy[x] = vet[x];
+    }
 }
 
 int openTxt(){
@@ -77,6 +88,13 @@ int openTxt(){
     int linha = 0;
     int size;
     int *vetor,*vetcpy;
+
+    FILE *out_file1 = fopen(out1, "wt");
+    FILE *out_file2 = fopen(out2, "wt");
+
+
+    //variaveis auxiliares para calcular o tempo de execucao
+    clock_t t;
 
     struct stat sb;
     stat(filename, &sb);
@@ -112,16 +130,29 @@ int openTxt(){
 
 
         //SHELL
-        memcpy(vetcpy, vetor,sizeof(int)*size);//copia vetor
-        printf ("SEQ=SHELL\n");
-        selectSort(vetcpy,size, 0);
+        copyVet(vetor, vetcpy, size);
+        //memcpy(vetcpy, vetor,sizeof(int)*size);//copia vetor
+        fprintf(out_file1,"SEQ=SHELL\n");
+        t = clock();
+        selectSort(vetcpy,size, 0, out_file1);
+        t = clock() - t;
+        fprintf(out_file2,"\nSHELL,%d,%lf",size, ((double)t)/((CLOCKS_PER_SEC)));
+
         //KNUTH
-        memcpy(vetcpy, vetor,sizeof(int)*size); //copia vetor
-        printf ("SEQ=KNUTH\n");
-        selectSort(vetcpy,size, 1);
+        copyVet(vetor, vetcpy, size);
+       // memcpy(vetcpy, vetor,sizeof(int)*size); //copia vetor
+        fprintf(out_file1,"SEQ=KNUTH\n");
+         t = clock();
+        selectSort(vetcpy,size, 1, out_file1);
+        t = clock() - t;
+        fprintf(out_file2,"\nKNUTH,%d,%lf",size, ((double)t)/((CLOCKS_PER_SEC)));
+
         //CIURA
-        printf ("SEQ=CIURA\n");
-        selectSort(vetor,size, 3);
+        fprintf(out_file1,"SEQ=CIURA\n");
+         t = clock();
+        selectSort(vetor,size, 2, out_file1);
+         t = clock() - t;
+        fprintf(out_file2,"\nCIURA,%d,%lf",size, ((double)t)/((CLOCKS_PER_SEC)));
 
 
         free(vetor);
@@ -136,5 +167,6 @@ int openTxt(){
 
 int main()
 {
+
     openTxt();
 }
